@@ -1,2 +1,2 @@
-# TestPythonRepoEBuild
-TestPythonRepo for Elastic Bean Stalk 
+# Elastic Bean Stalk Build for FastAPI
+TestPythonRepo for Elastic Bean Stalk build
