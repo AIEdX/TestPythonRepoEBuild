@@ -1,2 +1,5 @@
 fastapi
-uvicorn[standard]>=0.15.0 
+uvicorn[standard]>=0.15.0
+pydantic[email]>=2.0.0
+python-multipart
+email-validator 
