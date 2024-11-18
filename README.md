@@ -93,22 +93,151 @@ web: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
    - Application name: Your EB application
    - Environment name: Your EB environment
 
-### 3. Configure Build Commands
+### 3. Configure BuildSpec
 
-In your Elastic Beanstalk environment, you need to add specific build commands. Navigate to:
+This template uses AWS CodeBuild with a `buildspec.yml` file to manage dependencies:
 
-1. Go to Elastic Beanstalk Console
-2. Select your environment
-3. Click "Configuration"
-4. Under "Software", click "Edit"
-5. In the "Build commands" section, add:
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
+```yaml
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.x
+  pre_build:
+    commands:
+      - echo "Starting pre-build phase"
+      - python --version
+  build:
+    commands:
+      - echo "Installing dependencies"
+      - pip install -r requirements.txt
+      - echo "Creating dependencies directory"
+      - mkdir -p dependencies
+      - pip install -r requirements.txt -t dependencies/
+      - echo "Dependencies installed successfully"
+      - ls -la
+  post_build:
+    commands:
+      - echo "Build completed"
+
+artifacts:
+  files:
+    - '**/*'
+    - 'dependencies/**/*'
+  base-directory: '.'
 ```
-6. Click "Apply"
 
-> ⚠️ **Important**: Without these build commands, your dependencies won't be installed properly, leading to deployment failures or 502 errors.
+> ⚠️ **Important**: This buildspec.yml ensures all dependencies are properly packaged with your application.
+
+## 🧪 Testing API Endpoints
+
+### Using cURL
+
+1. Health Check:
+```bash
+curl http://localhost:8000/
+```
+
+2. Create User:
+```bash
+curl -X POST http://localhost:8000/users/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "username": "testuser",
+    "full_name": "Test User",
+    "password": "password123"
+  }'
+```
+
+3. Get All Users:
+```bash
+curl http://localhost:8000/users/
+```
+
+4. Get Specific User:
+```bash
+curl http://localhost:8000/users/1
+```
+
+### Using Postman
+
+1. **Health Check**
+   - Method: `GET`
+   - URL: `http://localhost:8000/`
+   - No headers or body required
+
+2. **Create User**
+   - Method: `POST`
+   - URL: `http://localhost:8000/users/`
+   - Headers:
+     ```
+     Content-Type: application/json
+     ```
+   - Body (raw JSON):
+     ```json
+     {
+       "email": "test@example.com",
+       "username": "testuser",
+       "full_name": "Test User",
+       "password": "password123"
+     }
+     ```
+
+3. **Get All Users**
+   - Method: `GET`
+   - URL: `http://localhost:8000/users/`
+   - No headers or body required
+
+4. **Get Specific User**
+   - Method: `GET`
+   - URL: `http://localhost:8000/users/1`
+   - No headers or body required
+
+### Expected Responses
+
+1. **Health Check Response**:
+```json
+{
+    "status": "healthy",
+    "timestamp": "2024-02-18T12:34:56.789Z",
+    "service": "FastAPI AWS Template"
+}
+```
+
+2. **Create User Response**:
+```json
+{
+    "id": 1,
+    "email": "test@example.com",
+    "username": "testuser",
+    "full_name": "Test User",
+    "created_at": "2024-02-18T12:34:56.789Z"
+}
+```
+
+3. **Get All Users Response**:
+```json
+[
+    {
+        "id": 1,
+        "email": "test@example.com",
+        "username": "testuser",
+        "full_name": "Test User",
+        "created_at": "2024-02-18T12:34:56.789Z"
+    }
+]
+```
+
+4. **Error Response Example**:
+```json
+{
+    "error": "Username already registered",
+    "status_code": 400,
+    "timestamp": "2024-02-18T12:34:56.789Z"
+}
+```
 
 ## 🔧 Configuration Tips
 
